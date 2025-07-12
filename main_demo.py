@@ -118,6 +118,30 @@ def main():
     print("  ✅ Team selection optimization")
     print("  ✅ Quest strategy recommendations")
     
+    # Demonstrate AI Helper
+    try:
+        from src.utils.ai_helper import AIHelper
+        ai_helper = AIHelper()
+        
+        print("\n🧠 AI Helper Demo:")
+        recommendations = ai_helper.get_debug_recommendations()
+        for rec in recommendations:
+            print(f"  💡 {rec}")
+        
+        # Simulate an error for demonstration
+        try:
+            raise ValueError("Demo error for AI analysis")
+        except Exception as e:
+            error_analysis = ai_helper.analyze_error(e, {"demo": True})
+            print(f"\n🔍 Error Analysis Demo:")
+            print(f"  Error Type: {error_analysis.error_type}")
+            print(f"  Suggested Fixes:")
+            for fix in error_analysis.suggested_fixes[:3]:
+                print(f"    - {fix}")
+        
+    except ImportError:
+        print("  ⚠️ AI Helper not available without dependencies")
+    
     # Try to import and run the full bot
     try:
         from src.config import Config
