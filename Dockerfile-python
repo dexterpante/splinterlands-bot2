@@ -1,0 +1,71 @@
+# Use Python slim image for smaller size
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    unzip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install additional dependencies for Chrome
+RUN apt-get update && apt-get install -y \
+    libpangocairo-1.0-0 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxtst6 \
+    libnss3 \
+    libcups2 \
+    libxss1 \
+    libxrandr2 \
+    libgconf2-4 \
+    libasound2 \
+    libatk1.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better layer caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p logs data/ai_helper screenshots
+
+# Set environment variables
+ENV HEADLESS=true
+ENV CHROME_EXEC=/usr/bin/google-chrome-stable
+
+# Create non-root user for security
+RUN groupadd -r botuser && useradd -r -g botuser botuser
+RUN chown -R botuser:botuser /app
+USER botuser
+
+# Expose port for potential web interface
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; print('Bot is healthy')" || exit 1
+
+# Default command
+CMD ["python", "main.py"]
